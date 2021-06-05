@@ -24,14 +24,21 @@ func main() {
 	}
 
 	defer nc.Close()
-	for i := 0; i < 1e5; i++ {
+	i := 0
+	for ; i < 1e3; i++ {
 		s := fmt.Sprintf("Msg: %v data: %v\n", i, rg.Intn(10000000))
 
-		err := nc.Publish("events.123", []byte(s))
+		/*err := nc.Publish("events.123", []byte(s))
+		if err != nil {
+			logger.Info(err)
+			return
+		}*/
+		msg, err := nc.Request("events.13", []byte(s), 1*time.Millisecond)
 		if err != nil {
 			logger.Info(err)
 			return
 		}
+		logger.Info(string(msg.Data))
 	}
-
+	fmt.Println(i)
 }

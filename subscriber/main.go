@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/IDarar/hub/pkg/logger"
@@ -15,21 +16,28 @@ func main() {
 		return
 	}
 	defer nc.Close()
-	sub, err := nc.SubscribeSync("events.*")
+
+	count := 0
+
+	sub, err := nc.Subscribe("events.*", func(msg *nats.Msg) {
+		msg.Respond([]byte("123"))
+		count++
+		logger.Info(msg, string(msg.Data))
+	})
+
 	if err != nil {
 		logger.Info(err)
 		return
 	}
+	defer sub.Unsubscribe()
 
 	for {
-
-		msg, err := sub.NextMsg(3 * time.Second)
-		if err != nil {
-			logger.Info(err)
-			return
+		old := count
+		time.Sleep(5 * time.Second)
+		if old == count {
+			sub.Unsubscribe()
+			break
 		}
-		go logger.Info(string(msg.Data))
-
 	}
-
+	fmt.Println(count)
 }
